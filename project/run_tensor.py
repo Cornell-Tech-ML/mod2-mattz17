@@ -13,6 +13,35 @@ def RParam(*shape):
 
 # TODO: Implement for Task 2.5.
 
+class Network(minitorch.Module):
+    def __init__(self, hidden_layers):
+        super().__init__()
+        self.layer1 = Linear(2, hidden_layers)
+        self.layer2 = Linear(hidden_layers, hidden_layers)
+        self.layer3 = Linear(hidden_layers, 1)
+
+
+    def forward(self, inputs):
+        out = self.layer1.forward(inputs).relu()
+        out = self.layer2.forward(out).relu()
+        out = self.layer3.forward(out).sigmoid()
+        return out
+
+
+class Linear(minitorch.Module):
+    def __init__(self, in_size, out_size):
+        super().__init__()
+        self.weights = RParam(in_size, out_size)
+        self.bias = RParam(out_size)
+
+    def forward(self, inputs):
+        reshaped_inputs = inputs.view(*inputs.shape, 1)
+        reshaped_weights = self.weights.value.view(1, *self.weights.value.shape)
+
+        out = (reshaped_inputs * reshaped_weights).sum(1).contiguous().view(inputs.shape[0], self.weights.value.shape[-1]) + self.bias.value.view(1, self.weights.value.shape[-1])
+
+        return out
+
 def default_log_fn(epoch, total_loss, correct, losses):
     print("Epoch ", epoch, " loss ", total_loss, "correct", correct)
 
@@ -64,7 +93,7 @@ class TensorTrain:
 
 if __name__ == "__main__":
     PTS = 50
-    HIDDEN = 2
+    HIDDEN = 30
     RATE = 0.5
-    data = minitorch.datasets["Simple"](PTS)
+    data = minitorch.datasets["Circle"](PTS)
     TensorTrain(HIDDEN).train(data, RATE)
